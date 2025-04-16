@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: delete-core-db2
+spec:
+  schedule: "50,52,54,56 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: deletedb2
+          containers:
+          - name: oc
+            image: quay.io/openshift/origin-cli:latest
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - podname=`oc get pod -n {{NAMESPACE}} -l app=core-db2 -o jsonpath='{..metadata.name}'`; oc delete pod $podname
+          restartPolicy: OnFailure

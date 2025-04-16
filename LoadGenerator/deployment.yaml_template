@@ -1,0 +1,53 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: loadgenerator
+  labels:
+    app: loadgenerator
+    app.kubernetes.io/component: loadgenerator
+    app.kubernetes.io/instance: loadgenerator
+    app.kubernetes.io/name: loadgenerator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      deployment: loadgenerator
+  template:
+    metadata:
+      labels:
+        deployment: loadgenerator
+    spec:
+      volumes:
+      - name: dshm
+        emptyDir:
+        medium: Memory
+      containers:
+        - name: loadgenerator
+          image: >-
+            image-registry.openshift-image-registry.svc:5000/{{NAMESPACE}}/loadgenerator:latest
+          volumeMounts:
+          - mountPath: /dev/shm
+            name: dshm
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: "1024Mi"
+              cpu: 1
+            limits:
+              memory: "2048Mi"
+              cpu: 2
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600

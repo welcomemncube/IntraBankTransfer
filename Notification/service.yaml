@@ -1,0 +1,17 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: notification
+  labels:
+    app: notification
+spec:
+  ports:
+    - name: 8000-tcp
+      protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
+  sessionAffinity: None
+  selector:
+    deployment: notification
+
