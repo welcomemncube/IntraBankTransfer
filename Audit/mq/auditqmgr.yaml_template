@@ -1,0 +1,52 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: auditmqsc
+  namespace: $TARGET_NAMESPACE
+data:
+  mq.mqsc: |-
+    define ql(AUDIT.IN)
+    ALTER QMGR MONQ(LOW)
+    ALTER QMGR PERFMEV(ENABLED) CHLEV(ENABLED)
+    ALTER QMGR STATQ(ON)
+    ALTER QMGR CHLAUTH(DISABLED) CONNAUTH(' ')
+    REFRESH SECURITY TYPE(CONNAUTH)
+---
+apiVersion: mq.ibm.com/v1beta1
+kind: QueueManager
+metadata:
+  name: audit
+  namespace: $TARGET_NAMESPACE
+spec:
+  version: 9.3.1.0-r2
+  license:
+    accept: true
+    license: L-RJON-CJR2TC
+    use: "NonProduction"
+  telemetry:
+    tracing:
+      instana:
+        enabled: true
+  web:
+    enabled: false
+  queueManager:
+    storage:
+      queueManager:
+        type: ephemeral
+    resources:
+      limits:
+        cpu: 500m
+      requests:
+        cpu: 100m
+    mqsc:
+      - configMap:
+          name: auditmqsc
+          items:
+            - mq.mqsc
+  template:
+    pod:
+      containers:
+        - env:
+            - name: MQSNOAUT
+              value: 'yes'
+          name: qmgr

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server description="new server">
+    <featureManager>
+        <feature>jdbc-4.3</feature>
+        <feature>javaee-8.0</feature>
+        <feature>jndi-1.0</feature>
+        <feature>monitor-1.0</feature>
+    </featureManager>
+
+
+    <library id="jdbcLib">
+        <fileset dir="jdbc" includes="*.jar"/>
+    </library>
+
+    <dataSource jndiName="jdbc/auditDB">
+        <jdbcDriver libraryRef="jdbcLib"/>
+
+        <properties.db2.jcc serverName="audit-db2" portNumber="50000"
+                    databaseName="auditdb"
+                    user="db2inst1"
+                    password="passw0rd"/>
+    </dataSource>
+
+    <variable name="ibmmq.username" value="app"/>
+    <variable name="ibmmq.password" value="passw0rd"/>
+
+    <resourceAdapter id="ibmmqjmsra" location="${server.config.dir}/mq/wmq.jmsra-9.3.1.0.rar" />
+
+    <jmsConnectionFactory jndiName="jms/ibmmqCF" connectionManagerRef="ConMgr6">
+        <properties.ibmmqjmsra
+            channel="SYSTEM.DEF.SVRCONN"
+            hostName="audit-ibm-mq"
+            port="1414"
+            queueManager="audit"
+            transportType="CLIENT"
+        />
+    </jmsConnectionFactory>
+
+    <connectionManager id="ConMgr6" maxPoolSize="10"/>
+
+    <jmsActivationSpec id="audit/AuditMDB">
+        <properties.ibmmqjmsra
+            channel="SYSTEM.DEF.SVRCONN"
+            hostName="audit-ibm-mq"
+            port="1414"
+            queueManager="audit"
+            transportType="CLIENT"
+            destinationRef="jms/queue1"
+            destinationType="javax.jms.Queue"
+        />
+	</jmsActivationSpec>
+
+    <jmsQueue id="jms/queue1" jndiName="jms/queue1">
+        <properties.ibmmqjmsra baseQueueName="AUDIT.IN" />
+    </jmsQueue>
+
+    <!-- END JMS CONFIGURATION -->
+
+
+    <basicRegistry id="basic" realm="BasicRealm" />
+
+    <httpEndpoint id="defaultHttpEndpoint"
+                  httpPort="9080"
+                  httpsPort="9443"
+                  host="*" />
+
+    <applicationManager autoExpand="true"/>
+
+    <ssl id="defaultSSLConfig" trustDefaultCerts="true" />
+
+    <webApplication location="audit.war" contextRoot="Audit"/>
+</server>

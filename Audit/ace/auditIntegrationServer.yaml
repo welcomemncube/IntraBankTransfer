@@ -1,0 +1,35 @@
+apiVersion: appconnect.ibm.com/v1beta1
+kind: IntegrationServer
+metadata:
+  name: audit
+spec:
+  adminServerSecure: true
+  createDashboardUsers: true
+  designerFlowsOperationMode: disabled
+  enableMetrics: true
+  license:
+    accept: true
+    license: L-SEWB-GH63KR
+    use: CloudPakForIntegrationNonProduction
+  pod:
+    containers:
+      runtime:
+        resources:
+          limits:
+            cpu: 1
+            memory: 512Mi
+          requests:
+            cpu: 1
+            memory: 512Mi
+  replicas: 3
+  router:
+    timeout: 120s
+  service:
+    endpointType: http
+  version: '12.0'
+  barURL: >-
+    https://raw.githubusercontent.com/callumpjackson/tempbarfiles/main/Auditproject.generated.bar
+  configurations:
+    - audit-mq-policy-project
+    - cred-for-github
+    - audit-serverconf

@@ -1,0 +1,8 @@
+---
+serverConfVersion: 1
+
+ResourceManagers:
+  OpenTelemetryManager:
+    openTelemetryEnabled: true                           # Enable or disable OpenTelemetry tracing. Available on Linux/x86-64. 
+    exporterOtlpGrpcEndpoint: 'instana-agent.instana-agent:4317'           # The GRPC endpoint to which the OpenTelemetry span data is sent. 
+                                                         # For example, 'telemetryagent.host.com:4317'.
