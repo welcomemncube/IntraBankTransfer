@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<link rel="stylesheet"
+	        href="https://1.www.s81c.com/common/carbon-for-ibm-dotcom/tag/v1/canary/plex.css"/>
+	  	<link rel="stylesheet"
+	        href="https://1.www.s81c.com/common/carbon-for-ibm-dotcom/tag/v1/canary/grid.css"/>
+        <script type="module" src="https://1.www.s81c.com/common/carbon/web-components/tag/latest/modal.min.js"></script>
+	  	<script type="module" src="https://1.www.s81c.com/common/carbon/web-components/tag/latest/ui-shell.min.js"></script>
+			<script type="module" src="https://1.www.s81c.com/common/carbon/web-components/tag/latest/form.min.js"></script>
+			<script type="module" src="https://1.www.s81c.com/common/carbon/web-components/tag/latest/input.min.js"></script>
+			<script type="module" src="https://1.www.s81c.com/common/carbon/web-components/tag/latest/button.min.js"></script>
+			<style>
+				h3 {
+				  margin-bottom: 1rem;
+				}
+			</style>
+			<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+			
+
+    </head>
+	<body>
+		<bx-header aria-label="IBM Platform Name">
+		<bx-header-menu-button button-label-active="Close menu" button-label-inactive="Open menu"></bx-header-menu-button>
+		<bx-header-name href="javascript:void 0" prefix="IBM"> Platinum Demo</bx-header-name>
+		<bx-header-nav menu-bar-label="IBM [Platform]">
+        <bx-header-nav-item href="javascript:void 0" onclick="showAuthenticate()" id="Authenticate">Authenticate</bx-header-nav-item>
+				<bx-header-nav-item href="javascript:void 0" onclick="showBalance()" id="Balance">Balance</bx-header-nav-item>
+		    <bx-header-nav-item href="javascript:void 0" onclick="showTransfer()" id="TransferTab">Transfer</bx-header-nav-item>
+		</bx-header-nav>
+		</bx-header>
+
+		<div class="bx--grid">
+			<div class="bx--row" id="authenticate">
+				<div class="bx--col-sm-4 bx--col-lg-12" style="margin: 6rem 0;">
+
+          <bx-form method="post">
+						<bx-form-item>
+							<bx-input style="width: 400px;" id="username">
+								<span slot="label-text">Username</span>
+								<span slot="validity-message">Something isn't right</span>
+							</bx-input>
+						</bx-form-item>
+						<bx-form-item>
+							<bx-input style="width: 400px;" id="password">
+								<span slot="label-text">Password</span>
+								<span slot="validity-message">Something isn't right</span>
+							</bx-input>
+						</bx-form-item>
+						<bx-btn id="login" onclick="sendLogin()">
+							Log-in
+						</bx-btn>
+					</bx-form>
+				</div>
+			</div>
+			<div class="bx--row" id="balance" style="display: none;">
+				<div class="bx--col-sm-4 bx--col-lg-12" style="margin: 6rem 0;">
+					<bx-btn id="balanceButton" onclick="getBalance()">
+						Get Balance
+					</bx-btn>
+					
+				</div>
+			</div>
+			<div class="bx--row" id="Transfer" style="display: none;">
+				<div class="bx--col-sm-4 bx--col-lg-12" style="margin: 6rem 0;">
+					<div class="bx--col-sm-4 bx--col-lg-12" style="margin: 6rem 0;">
+
+	          <bx-form method="post">
+							<bx-form-item>
+								<bx-input id="sourceAccount" style="width: 400px;">
+									<span slot="label-text">Source Account</span>
+									<span slot="validity-message">Something isn't right</span>
+								</bx-input>
+							</bx-form-item>
+							<bx-form-item>
+								<bx-input id="targetAccount" style="width: 400px;">
+									<span slot="label-text">Target Account</span>
+									<span slot="validity-message">Something isn't right</span>
+								</bx-input>
+							</bx-form-item>
+							<bx-form-item>
+								<bx-input id="amount" style="width: 400px;">
+									<span slot="label-text">Amount</span>
+									<span slot="validity-message">Something isn't right</span>
+								</bx-input>
+							</bx-form-item>
+							<bx-btn id="transferButton" onclick="transferMoney()">
+								Transfer
+							</bx-btn>
+						</bx-form>
+					</div>
+				</div>
+			</div>
+			<div class="bx--row" id="status">
+				<h3 id="transferStatus" style="display: none;">Hello</h3>
+				<h3 id="balanceAmount" style="display: none;">Hello</h3>
+			</div>
+		</div>
+
+		<script>
+       function showAuthenticate()
+			 {
+				 document.getElementById('authenticate').style = "display";
+				 document.getElementById('balance').style = "display: none";
+				 document.getElementById('Transfer').style = "display: none";
+			 }
+
+			 function showBalance()
+			 {
+				 document.getElementById('authenticate').style = "display: none";
+				 document.getElementById('balance').style = "display";
+				 document.getElementById('Transfer').style = "display: none";
+			 }
+
+			 function showTransfer()
+			 {
+				 document.getElementById('authenticate').style = "display: none";
+				 document.getElementById('balance').style = "display: none";
+				 document.getElementById('Transfer').style = "display";
+			 }
+
+			 function sendLogin()
+			 {
+				 var xhr = new XMLHttpRequest();
+				 xhr.open('post', 'api/authentication', true);
+
+				 xhr.onreadystatechange = function ()
+				 {
+					 if(this.readyState == 4 && this.status == 200)
+					 {
+						 console.log(this.responseText);
+						 showBalance();
+					 }
+				 }
+
+				 xhr.setRequestHeader('Content-Type', 'application/json');
+				 xhr.send('{}');
+			 }
+
+			 function getBalance()
+			 {
+				 var xhr = new XMLHttpRequest();
+				 xhr.open('get', 'api/balance/1234567890', true);
+
+				 xhr.onreadystatechange = function ()
+				 {
+					 if(this.readyState == 4 && this.status == 200)
+					 {
+						 console.log(this.responseText);
+						 document.getElementById('balanceAmount').innerHTML = this.responseText;
+						 document.getElementById('balanceAmount').style = "display";
+					 }
+				 }
+
+				 xhr.setRequestHeader('Content-Type', 'application/json');
+				 xhr.send();
+
+			 }
+
+       function transferMoney()
+			 {
+				 var xhr = new XMLHttpRequest();
+				 var transfer = {
+					 "sourceAccount": document.getElementById('sourceAccount').value,
+					 "targetAccount": document.getElementById('targetAccount').value,
+					 "amount": document.getElementById('amount').value
+				 }
+				 xhr.open('post', 'api/transfer', true);
+
+				 xhr.onreadystatechange = function ()
+				 {
+					 if(this.readyState == 4 && this.status == 200)
+					 {
+						 console.log(this.responseText);
+						 document.getElementById('transferStatus').innerHTML = this.responseText;
+						 document.getElementById('transferStatus').style = "display";
+					 }
+				 }
+         console.log(document.getElementById('sourceAccount').value);
+				 xhr.setRequestHeader('Content-Type', 'application/json');
+				 xhr.send(JSON.stringify(transfer));
+			 }
+
+		</script>
+	</body>

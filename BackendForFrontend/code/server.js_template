@@ -1,0 +1,188 @@
+const instana = require('@instana/collector');
+instana(); // this is fine
+
+const http = require("http");
+const https = require("https");
+
+const fs = require("fs").promises;
+
+const host = 'localhost';
+const port = 8000;
+const forwardingHost = '{{GATEWAY_HOSTNAME}}';
+const forwardingPort = 443;
+const forwardingCatalog = '/banking-demo/banking-demo-catalog';
+
+
+process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
+
+const requestListener = function(req, res){
+    console.log("Path: "+req.url + " method: "+req.method);
+
+    let body = '';
+    req.on('data', (chunk) => {
+      body += chunk;
+    });
+
+    req.on('end', () => {
+
+      console.log('Request payload: '+body);
+
+      if (req.url.startsWith('/api'))
+      {
+
+        if (req.url.endsWith('transfer'))
+        {
+           var responseData = callSequence(body, res);
+        }
+        else
+        {
+
+          var url = 'https://'+forwardingHost+':'+forwardingPort+forwardingCatalog+req.url.substring(4);
+          //var url='';
+          //if (req.url.endsWith('authentication'))
+          //{
+          //   url='http://authentication:9080/Authentication/api/Authenticate';
+          //}
+          //else
+          //{
+          //  url='http://balance-is:7800/balance/v1'+req.url.substring(4); 
+          //}
+
+
+          console.log("API URL: "+url);
+          var apiRequest = https.request(url, (apiRes) => {
+          //var apiRequest = http.request(url, (apiRes) => {
+            console.log('status code from API Connect: ', apiRes.statusCode);
+
+            let responseBody = '';
+            apiRes.on('data', (responseChunk) => {
+              responseBody += responseChunk;
+            });
+
+            apiRes.on('end', () => {
+              console.log("Writing response: "+responseBody);
+
+              res.setHeader("Content-Type", "application/json");
+              res.writeHead(apiRes.statusCode);
+              res.write(responseBody);
+              res.end();
+            });
+
+          });
+          apiRequest.setHeader("Content-Type", "application/json");
+          apiRequest.method = req.method;
+          if(req.method == 'POST')
+          {
+            apiRequest.setHeader("Content-Length", body.length);
+            apiRequest.write(body);
+          }
+          apiRequest.end();
+        }
+      }
+      else
+      {
+        fs.readFile("index.html")
+          .then(contents => {
+            res.setHeader("Content-Type", "text/html");
+            res.writeHead(200);
+            res.end(contents);
+          });
+       }
+
+    });
+
+};
+
+const server = http.createServer(requestListener);
+
+server.listen(port, () => {
+      console.log("Server is running on http://"+host+":"+port);
+});
+
+function callSequence(data, originalResponse)
+{
+  console.log("originalResponse="+originalResponse);
+  var fraudUrl = 'https://'+forwardingHost+':'+forwardingPort+forwardingCatalog+'/frauddetection';
+  //var fraudUrl = 'http://fraud:9080/Fraud/api/FraudDetection';
+  callFraudAPI(fraudUrl, data, originalResponse);
+}
+
+function callAPI(url, data, originalResponse)
+{
+  console.log("API URL: "+url);
+  var apiRequest = https.request(url, (apiRes) => {
+  //var apiRequest = http.request(url, (apiRes) => {
+    console.log('status code from API Connect: ', apiRes.statusCode);
+
+    let responseBody = '';
+    apiRes.on('data', (responseChunk) => {
+      responseBody += responseChunk;
+    });
+
+    apiRes.on('end', () => {
+      console.log("Writing response: "+responseBody);
+      console.log("originalResponse: "+ originalResponse);
+      if(originalResponse != null)
+      {
+        for (const property in apiRes.headers) {
+          var header = property;
+          var value = apiRes.headers[property];
+          console.log("Setting response header '"+header+"' to '"+value+"'");
+          originalResponse.setHeader(header, value);
+        };
+        originalResponse.setHeader("Content-Type", "application/json");
+        originalResponse.writeHead(apiRes.statusCode);
+        originalResponse.write(responseBody);
+        originalResponse.end();
+        var auditUrl = 'https://'+forwardingHost+':'+forwardingPort+forwardingCatalog+'/audit';
+        //var auditUrl = 'http://audit-is:7800/audit/v1/audit';
+        callAPI(auditUrl, '{"message": "Audited Transfer"}');
+        var notificationUrl = 'https://'+forwardingHost+':'+forwardingPort+forwardingCatalog+'/notification';
+        //var notificationUrl = 'http://notification:8000/notificationService';
+        callAPI(notificationUrl, '{}');
+      }
+      else
+      {
+        for (const property in apiRes.headers) {
+          var header = property;
+          var value = apiRes.headers[property];
+          console.log("Setting response header '"+header+"' to '"+value+"'");
+        };
+      }
+    });
+
+  });
+  apiRequest.setHeader("Content-Type", "application/json");
+  apiRequest.method = 'POST';
+  apiRequest.setHeader("Content-Length", data.length);
+  apiRequest.write(data);
+  apiRequest.end();
+}
+
+function callFraudAPI(url, data, originalResponse)
+{
+  console.log("API URL: "+url);
+  var apiRequest = https.request(url, (apiRes) => {
+  //var apiRequest = http.request(url, (apiRes) => {
+    console.log('status code from API Connect: ', apiRes.statusCode);
+
+    let responseBody = '';
+    apiRes.on('data', (responseChunk) => {
+      responseBody += responseChunk;
+    });
+
+    apiRes.on('end', () => {
+      console.log("Writing response: "+responseBody);
+      console.log("originalResponse: "+ originalResponse);
+      var transferUrl = 'https://'+forwardingHost+':'+forwardingPort+forwardingCatalog+'/transfer';
+      //var transferUrl = 'http://transfer-is:7800/transferfunds/v1/transfer';
+      callAPI(transferUrl, data, originalResponse);
+    });
+
+  });
+  apiRequest.setHeader("Content-Type", "application/json");
+  apiRequest.method = 'POST';
+  apiRequest.setHeader("Content-Length", data.length);
+  apiRequest.write(data);
+  apiRequest.end();
+}

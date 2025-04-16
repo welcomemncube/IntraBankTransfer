@@ -1,0 +1,35 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: bankui
+  labels:
+    app: bankui
+spec:
+  ports:
+    - name: 8000-tcp
+      protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
+  sessionAffinity: None
+  selector:
+    deployment: bankui
+---
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: bankui
+  labels:
+    app.kubernetes.io/component: http
+    app.kubernetes.io/instance: bankui
+    app.kubernetes.io/managed-by: ibm-appconnect
+    app.kubernetes.io/name: bankui
+    release: bankui
+spec:
+  to:
+    kind: Service
+    name: bankui
+    weight: 100
+  port:
+    targetPort: 8000-tcp
+  wildcardPolicy: None

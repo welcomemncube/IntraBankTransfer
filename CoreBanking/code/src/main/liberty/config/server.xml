@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server description="new server">
+    <featureManager>
+        <feature>jdbc-4.3</feature>
+        <feature>javaee-8.0</feature>
+        <feature>jndi-1.0</feature>
+        <feature>monitor-1.0</feature>
+    </featureManager>
+
+
+    <library id="jdbcLib">
+        <fileset dir="jdbc" includes="*.jar"/>
+    </library>
+
+    <dataSource jndiName="jdbc/coreDB">
+        <jdbcDriver libraryRef="jdbcLib"/>
+
+        <properties.db2.jcc serverName="core-db2" portNumber="50000"
+                    databaseName="coredb"
+                    user="db2inst1"
+                    password="passw0rd"/>
+    </dataSource>
+
+    <variable name="ibmmq.username" value="app"/>
+    <variable name="ibmmq.password" value="passw0rd"/>
+
+    <resourceAdapter id="ibmmqjmsra" location="${server.config.dir}/mq/wmq.jmsra-9.3.1.0.rar" />
+
+    <jmsConnectionFactory jndiName="jms/ibmmqCF" connectionManagerRef="ConMgr6">
+        <properties.ibmmqjmsra
+            channel="SYSTEM.DEF.SVRCONN"
+            hostName="corebanking-ibm-mq"
+            port="1414"
+            queueManager="corebanking"
+            transportType="CLIENT"
+        />
+    </jmsConnectionFactory>
+
+    <connectionManager id="ConMgr6" maxPoolSize="10"/>
+
+    <jmsActivationSpec id="core/TransferMDB">
+        <properties.ibmmqjmsra
+            channel="SYSTEM.DEF.SVRCONN"
+            hostName="corebanking-ibm-mq"
+            port="1414"
+            queueManager="corebanking"
+            transportType="CLIENT"
+            destinationRef="jms/transfer"
+            destinationType="javax.jms.Queue"
+        />
+	</jmsActivationSpec>
+
+    <jmsQueue id="jms/transfer" jndiName="jms/transfer">
+        <properties.ibmmqjmsra baseQueueName="TRANSFER.IN" />
+    </jmsQueue>
+
+    <jmsActivationSpec id="core/BalanceMDB">
+        <properties.ibmmqjmsra
+            channel="SYSTEM.DEF.SVRCONN"
+            hostName="corebanking-ibm-mq"
+            port="1414"
+            queueManager="corebanking"
+            transportType="CLIENT"
+            destinationRef="jms/balance"
+            destinationType="javax.jms.Queue"
+        />
+	</jmsActivationSpec>
+
+    <jmsQueue id="jms/balance" jndiName="jms/balance">
+        <properties.ibmmqjmsra baseQueueName="BALANCE.IN" />
+    </jmsQueue>
+
+    <jmsQueue id="core/balanceout" jndiName="jms/balanceout">
+        <properties.ibmmqjmsra baseQueueName="BALANCE.OUT" />
+    </jmsQueue>
+
+
+    <!-- END JMS CONFIGURATION -->
+
+
+    <basicRegistry id="basic" realm="BasicRealm" />
+
+    <httpEndpoint id="defaultHttpEndpoint"
+                  httpPort="9080"
+                  httpsPort="9443"
+                  host="*" />
+
+    <applicationManager autoExpand="true"/>
+
+    <ssl id="defaultSSLConfig" trustDefaultCerts="true" />
+
+    <webApplication location="core.war" contextRoot="Core"/>
+</server>

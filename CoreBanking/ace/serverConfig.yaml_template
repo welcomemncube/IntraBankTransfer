@@ -1,0 +1,9 @@
+apiVersion: appconnect.ibm.com/v1beta1
+kind: Configuration
+metadata:
+  name: corebanking-serverconf
+spec:
+  contents: >-
+    $SERVER_CONFIG
+  type: serverconf
+  version: 12.0.5.0-r1-lts

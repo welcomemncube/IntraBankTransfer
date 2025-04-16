@@ -1,0 +1,71 @@
+kind: DeploymentConfig
+apiVersion: apps.openshift.io/v1
+metadata:
+  name: core-db2
+  labels:
+    app: core-db2
+spec:
+  strategy:
+    type: Rolling
+    rollingParams:
+      updatePeriodSeconds: 1
+      intervalSeconds: 1
+      timeoutSeconds: 600
+      maxUnavailable: 25%
+      maxSurge: 25%
+    resources: {}
+    activeDeadlineSeconds: 21600
+  triggers:
+    - type: ConfigChange
+  replicas: 1
+  test: false
+  selector:
+    app: core-db2
+    deploymentconfig: core-db2
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: core-db2
+        deploymentconfig: core-db2
+    spec:
+      containers:
+        - resources: {}
+          terminationMessagePath: /dev/termination-log
+          name: core-db2
+          env:
+            - name: DB2INST1_PASSWORD
+              value: passw0rd
+            - name: LICENSE
+              value: accept
+            - name: DBNAME
+              value: COREDB
+          securityContext:
+            capabilities:
+            privileged: true
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: true
+          ports:
+            - containerPort: 50000
+              protocol: TCP
+          imagePullPolicy: Always
+          terminationMessagePolicy: File
+          image: 'image-registry.openshift-image-registry.svc:5000/{{NAMESPACE}}/coredb'
+          livenessProbe:
+            tcpSocket:
+              port: 50000
+            initialDeplySeconds: 180
+            periodSeconds: 30
+            failureThreshold: 5
+          readinessProbe:
+            tcpSocket:
+              port: 50000
+            initialDeplySeconds: 180
+            periodSeconds: 30
+            failureThreshold: 5
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      serviceAccountName: coresvcacct
+      serviceAccount: coresvcacct
+      schedulerName: default-scheduler
